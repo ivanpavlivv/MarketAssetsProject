@@ -92,9 +92,18 @@ namespace MarketAssetsAPI.Services
             }
         }
 
-        public async Task<List<Asset>> GetAllAssetsAsync()
+        public async Task<List<AssetDto>> GetAllAssetsAsync()
         {
-            return await _db.Assets.ToListAsync();
+            return await _db.Assets
+                .Select(a => new AssetDto
+                {
+                    Symbol = a.Symbol,
+                    Kind = a.Kind,
+                    Description = a.Description,
+                    Currency = a.Currency,
+                    BaseCurrency = a.BaseCurrency
+                })
+                .ToListAsync();
         }
     }
 }

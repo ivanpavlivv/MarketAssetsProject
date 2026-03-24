@@ -12,10 +12,12 @@ namespace MarketAssetsAPI.Controllers
     public class AssetsController : ControllerBase
     {
         private readonly InstrumentService _instrumentService;
+        private readonly PriceService _priceService;
 
-        public AssetsController(InstrumentService instrumentService)
+        public AssetsController(InstrumentService instrumentService, PriceService priceService)
         {
             _instrumentService = instrumentService;
+            _priceService = priceService;
         }
 
         /// <summary>
@@ -38,6 +40,20 @@ namespace MarketAssetsAPI.Controllers
         {
             await _instrumentService.SyncInstrumentsAsync(provider, kind);
             return Ok(new { message = $"Sync complete for provider={provider}, kind={kind}" });
+        }
+
+        /// <summary>
+        /// Returns price information for one or more assets.
+        /// </summary>
+        [HttpGet("prices")]
+        public async Task<IActionResult> GetPrices([FromQuery] string? symbols)
+        {
+            var symbolList = string.IsNullOrWhiteSpace(symbols)
+                ? new List<string>()
+                : symbols.Split(',').Select(s => s.Trim()).ToList();
+
+            var prices = await _priceService.GetPricesAsync(symbolList);
+            return Ok(prices);
         }
     }
 }
