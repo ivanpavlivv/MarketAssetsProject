@@ -31,18 +31,6 @@ namespace MarketAssetsAPI.Controllers
         }
 
         /// <summary>
-        /// Fetches instruments from Fintacharts and syncs them into the database.
-        /// </summary>
-        [HttpPost("sync")]
-        public async Task<IActionResult> SyncAssets(
-            [FromQuery] string provider = "oanda",
-            [FromQuery] string kind = "forex")
-        {
-            await _instrumentService.SyncInstrumentsAsync(provider, kind);
-            return Ok(new { message = $"Sync complete for provider={provider}, kind={kind}" });
-        }
-
-        /// <summary>
         /// Returns price information for one or more assets.
         /// </summary>
         [HttpGet("prices")]
