@@ -15,3 +15,5 @@ Docker Desktop is required to run this project
 
 2. Start the application via Docker
 docker compose up --build
+
+3. Visit http://localhost:8080/
