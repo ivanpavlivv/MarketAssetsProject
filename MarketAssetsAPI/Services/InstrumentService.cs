@@ -105,5 +105,54 @@ namespace MarketAssetsAPI.Services
                 })
                 .ToListAsync();
         }
+
+        public async Task<List<HistoricalPriceDto>> GetHistoricalPricesAsync(
+            string symbol,
+            DateTime from,
+            DateTime? to,
+            string periodicity = "day",
+            int interval = 1)
+        {
+            var asset = await _db.Assets
+                .FirstOrDefaultAsync(a => a.Symbol == symbol);
+
+            if (asset == null)
+                return new List<HistoricalPriceDto>();
+
+            var token = await _authService.GetAccessTokenAsync();
+
+            var toDate = to ?? DateTime.UtcNow;
+
+            var url = $"{_settings.BaseUrl}/api/bars/v1/bars/date-range" +
+                      $"?instrumentId={asset.InstrumentId}" +
+                      $"&provider={asset.Provider}" +
+                      $"&interval={interval}" +
+                      $"&periodicity={periodicity}" +
+                      $"&startDate={from:yyyy-MM-dd}" +
+                      $"&endDate={toDate:yyyy-MM-dd}";
+
+            var request = new HttpRequestMessage(HttpMethod.Get, url);
+            request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
+
+            var response = await _httpClient.SendAsync(request);
+            if (!response.IsSuccessStatusCode)
+                return new List<HistoricalPriceDto>();
+
+            var json = await response.Content.ReadAsStringAsync();
+            var result = JsonSerializer.Deserialize<BarsResponse>(json, _jsonOptions);
+
+            if (result?.Data == null)
+                return new List<HistoricalPriceDto>();
+
+            return result.Data.Select(b => new HistoricalPriceDto
+            {
+                Timestamp = b.Timestamp,
+                Open = b.Open,
+                High = b.High,
+                Low = b.Low,
+                Close = b.Close,
+                Volume = b.Volume
+            }).ToList();
+        }
     }
 }

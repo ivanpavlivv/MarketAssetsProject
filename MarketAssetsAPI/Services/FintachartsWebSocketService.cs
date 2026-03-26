@@ -120,6 +120,11 @@ namespace MarketAssetsAPI.Services
                 {
                     try
                     {
+                        var alreadySeeded = await db.AssetPrices
+                            .AnyAsync(p => p.AssetId == asset.Id, stoppingToken);
+
+                        if (alreadySeeded) continue;
+
                         var url = $"{_settings.BaseUrl}/api/bars/v1/bars/count-back" +
                                   $"?instrumentId={asset.InstrumentId}" +
                                   $"&provider={asset.Provider}" +
@@ -140,8 +145,8 @@ namespace MarketAssetsAPI.Services
                             ask: null,
                             last: bar.Close);
 
-                        // _logger.LogInformation("Seeded initial price for {Symbol}: {Price}",
-                        //     asset.Symbol, bar.Close);
+                        _logger.LogInformation("Seeded initial price for {Symbol}: {Price}",
+                            asset.Symbol, bar.Close);
                     }
                     catch (Exception ex)
                     {
@@ -165,7 +170,6 @@ namespace MarketAssetsAPI.Services
 
                 WebSocketReceiveResult result;
 
-                // Keep reading chunks until endOfMessage = true
                 do
                 {
                     result = await ws.ReceiveAsync(new ArraySegment<byte>(buffer), stoppingToken);

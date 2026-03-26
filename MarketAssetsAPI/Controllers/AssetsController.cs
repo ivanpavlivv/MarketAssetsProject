@@ -43,5 +43,28 @@ namespace MarketAssetsAPI.Controllers
             var prices = await _priceService.GetPricesAsync(symbolList);
             return Ok(prices);
         }
+
+        /// <summary>
+        /// Returns historical OHLCV price bars for a specific asset.
+        /// </summary>
+        [HttpGet("history")]
+        public async Task<IActionResult> GetHistory(
+            [FromQuery] string symbol,
+            [FromQuery] DateTime from,
+            [FromQuery] DateTime? to = null)
+        {
+            if (string.IsNullOrWhiteSpace(symbol))
+                return BadRequest(new { message = "symbol is required" });
+
+            if (from == DateTime.MinValue)
+                return BadRequest(new { message = "Date is required" });
+            
+            var history = await _instrumentService.GetHistoricalPricesAsync(symbol, from, to);
+
+            if (!history.Any())
+                return NotFound(new { message = $"No historical data found for symbol={symbol}" });
+
+            return Ok(history);
+        }
     }
 }
